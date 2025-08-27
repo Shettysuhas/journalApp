@@ -1,42 +1,58 @@
 package net.engineeringdigest.journalApp.Controllers;
 
 import net.engineeringdigest.journalApp.Entities.JournalEntry;
+import net.engineeringdigest.journalApp.Service.JournalEntryService;
+import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/journal")
 public class JournalEntryController {
 
-    private Map<Long, JournalEntry> journalEntries=new HashMap<>();
+    @Autowired
+    private JournalEntryService journalEntryService;
 
     @GetMapping("/all")
     public List<JournalEntry> GetALLJournals()
     {
-        return new ArrayList<>(journalEntries.values());
+       return journalEntryService.GetAllEntry();
     }
 
     @PostMapping
-    public boolean CreateEntry(@RequestBody JournalEntry jEntry)
+    public JournalEntry CreateEntry(@RequestBody JournalEntry jEntry)
     {
-        journalEntries.put((long) jEntry.getJournalId(),jEntry);
-        return true;
+        jEntry.setDate(LocalDateTime.now());
+        journalEntryService.SaveEntry(jEntry);
+        return jEntry;
     }
 
     @GetMapping("/id/{myid}")
-    public JournalEntry GetJournalByID(@PathVariable int myid){
-        return journalEntries.get((long)myid);
+    public JournalEntry GetJournalByID(@PathVariable ObjectId myid)
+    {
+        return journalEntryService.GetEntryById(myid).orElse(null);
     }
+
     @DeleteMapping("/id/{myid}")
-    public JournalEntry DeleteJournalByID(@PathVariable int myid){
-        return journalEntries.remove((long)myid);
+    public void DeleteJournalByID(@PathVariable ObjectId myid)
+    {
+
+         journalEntryService.DeleteEntryById(myid);
     }
     @PutMapping("/id/{myid}")
-    public JournalEntry UpdateJournal(@PathVariable int myid,@RequestBody JournalEntry jEntry){
-       return journalEntries.put((long)myid,jEntry);
+    public JournalEntry UpdateJournal(@PathVariable ObjectId myid,@RequestBody JournalEntry jEntry)
+    {
+        JournalEntry oldentry=journalEntryService.GetEntryById(myid).orElse(null);
+        if(oldentry!=null)
+        {
+            oldentry.setJournalTitle((jEntry.getJournalTitle()!="" && jEntry.getJournalTitle()!=null)? jEntry.getJournalTitle() : oldentry.getJournalTitle());
+            oldentry.setJournalEntry((jEntry.getJournalEntry()!="" && jEntry.getJournalEntry()!=null)? jEntry.getJournalEntry() : oldentry.getJournalEntry());
+        }
+        journalEntryService.SaveEntry(oldentry);
+        return oldentry;
     }
 }
