@@ -1,0 +1,1 @@
+The backend of the Journal App is built using Spring Boot and MongoDB, providing a scalable, secure, and efficient foundation for managing user journals. It follows a RESTful API design, making it easy to integrate with web or mobile clients.
